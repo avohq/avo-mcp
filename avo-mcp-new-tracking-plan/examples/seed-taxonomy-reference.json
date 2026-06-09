@@ -1,0 +1,417 @@
+{
+  "name": "Avo MCP Skill Reference Taxonomy (slim)",
+  "_comment": "Curated reference taxonomy demonstrating canonical patterns for naming, funnels, deep events, properties, constraints, and metrics. Derived from a real Avo seed plan; trimmed to the smallest set that still shows every pattern the agent needs.",
+  "events": [
+    {
+      "id": "Xi5LgY7SNU",
+      "name": "Signup Started",
+      "_pattern": "Funnel start event. Captures intent before any work; pairs with Signup Step Completed and Signup Completed.",
+      "eventType": "event",
+      "description": "Event sent when the user clicks a signup button somewhere on the landing page",
+      "categories": ["kroTzNQSW"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Signup Button Location": {
+                "id": "qbRj39ht8u",
+                "index": 0,
+                "description": "The location of the signup button on the page",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": ["Signup Button Location"]
+          }
+        }
+      }
+    },
+    {
+      "id": "DOWOxzMMB1",
+      "name": "Signup Step Completed",
+      "_pattern": "Funnel milestone. Reuses an `X Step Name` + `X Step Index` pattern; constraints on Index (minimum 1).",
+      "eventType": "event",
+      "description": "Event sent when a user completes a step in the signup process.",
+      "categories": ["kroTzNQSW"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Signup Step Name": {
+                "id": "k9Jda25UOh",
+                "index": 0,
+                "description": "The name of the signup step the user just completed",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "string"
+              },
+              "Signup Step Index": {
+                "id": "vbzx8qlUAW",
+                "index": 1,
+                "description": "The index of the signup step starting with 1.",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "integer",
+                "multipleOf": 1,
+                "minimum": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": ["Signup Step Name", "Signup Step Index"]
+          }
+        }
+      }
+    },
+    {
+      "id": "BxWN0SB8dq",
+      "name": "Signup Completed",
+      "_pattern": "Funnel completion event. Carries an outcome property (Authentication Method) and a user property (Email). Shows the event-vs-user property split. Email is tagged `pii` — it is included as the canonical user-property example, and the tag exists so downstream consumers can apply the workspace's PII handling rules (GDPR/CCPA consent, retention, right to erasure). Substitute a hashed user id when raw email is not appropriate for your context.",
+      "eventType": "event",
+      "description": "Event sent when a user has successfully signed up",
+      "categories": ["kroTzNQSW"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Authentication Method": {
+                "id": "u1-GxIrDyH",
+                "index": 0,
+                "description": "The method the user used to sign up or log in",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": ["Authentication Method"]
+          },
+          "userProperties": {
+            "type": "object",
+            "properties": {
+              "Email": {
+                "id": "EcA0xITrjv",
+                "index": 0,
+                "description": "The user's email address. Tagged `pii` — must be handled per the workspace's PII rules (GDPR/CCPA consent, retention limits, right to erasure). Substitute a hashed identifier when raw email is not appropriate for the destination.",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": ["pii"],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": ["Email"]
+          }
+        }
+      }
+    },
+    {
+      "id": "qqPurchStrt",
+      "name": "Purchase Started",
+      "_pattern": "Funnel start. Demonstrates that funnel events can share a common cluster of properties (cart amounts) inherited across all steps.",
+      "eventType": "event",
+      "description": "Event sent when a user clicks the button to proceed to checkout",
+      "categories": ["4mvFAiDDq"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Product Count": {
+                "id": "F8Dn38hwte",
+                "index": 0,
+                "description": "The total number of products in this cart. Including multiple items of the same product.",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "integer"
+              },
+              "Cart Amount Total": {
+                "id": "oEuv-xuW4W",
+                "index": 1,
+                "description": "The total amount of the cart, including shipping and taxes",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "number"
+              },
+              "Cart Amount Tax": {
+                "id": "zsAG849e0A",
+                "index": 2,
+                "description": "The total amount of tax in the cart",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "number"
+              },
+              "Cart Amount Shipping": {
+                "id": "6uU8Slp50y",
+                "index": 3,
+                "description": "The total amount for shipping of the cart",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "number"
+              },
+              "Cart Amount Revenue": {
+                "id": "qCrlRgSngi",
+                "index": 4,
+                "description": "The total amount of revenue for this cart. Revenue is defined as Total Amount - Shipping - Tax",
+                "nameMapping": [],
+                "isSystemProperty": false,
+                "tags": [],
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": ["Product Count", "Cart Amount Total", "Cart Amount Tax", "Cart Amount Shipping", "Cart Amount Revenue"]
+          }
+        }
+      }
+    },
+    {
+      "id": "lS0DI2pOjn",
+      "name": "Purchase Step Completed",
+      "_pattern": "Funnel milestone. Inherits the cart amount cluster from Purchase Started and adds the step pattern (Step Name + Step Index).",
+      "eventType": "event",
+      "description": "Event sent when the user completes a step in the checkout process",
+      "categories": ["4mvFAiDDq"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Product Count": { "id": "F8Dn38hwte", "index": 0, "description": "The total number of products in this cart. Including multiple items of the same product.", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "integer" },
+              "Cart Amount Total": { "id": "oEuv-xuW4W", "index": 1, "description": "The total amount of the cart, including shipping and taxes", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Tax": { "id": "zsAG849e0A", "index": 2, "description": "The total amount of tax in the cart", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Shipping": { "id": "6uU8Slp50y", "index": 3, "description": "The total amount for shipping of the cart", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Revenue": { "id": "qCrlRgSngi", "index": 4, "description": "The total amount of revenue for this cart. Revenue is defined as Total Amount - Shipping - Tax", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Purchase Step Name": { "id": "XyqeJAWOcS", "index": 5, "description": "The name of the checkout step the user just completed", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Purchase Step Index": { "id": "V6aQDr8Btq", "index": 6, "description": "The number for this checkout step in the order. First step is number 1.", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "integer", "multipleOf": 1, "minimum": 1 }
+            },
+            "additionalProperties": false,
+            "required": ["Product Count", "Cart Amount Total", "Cart Amount Tax", "Cart Amount Shipping", "Cart Amount Revenue", "Purchase Step Name", "Purchase Step Index"]
+          }
+        }
+      }
+    },
+    {
+      "id": "9pIHGmLQLD",
+      "name": "Purchase Completed",
+      "_pattern": "Funnel completion. Inherits the cart cluster and adds outcome properties (Payment Method, Coupon Code).",
+      "eventType": "event",
+      "description": "Event sent when a checkout has successfully been completed",
+      "categories": ["4mvFAiDDq"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Product Count": { "id": "F8Dn38hwte", "index": 0, "description": "The total number of products in this cart. Including multiple items of the same product.", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "integer" },
+              "Cart Amount Total": { "id": "oEuv-xuW4W", "index": 1, "description": "The total amount of the cart, including shipping and taxes", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Tax": { "id": "zsAG849e0A", "index": 2, "description": "The total amount of tax in the cart", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Shipping": { "id": "6uU8Slp50y", "index": 3, "description": "The total amount for shipping of the cart", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Cart Amount Revenue": { "id": "qCrlRgSngi", "index": 4, "description": "The total amount of revenue for this cart. Revenue is defined as Total Amount - Shipping - Tax", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "number" },
+              "Payment Method": { "id": "p2x1Kh-7s-", "index": 5, "description": "The method the user selected to make payment with", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Coupon Code": { "id": "qU_0FhKPbw", "index": 6, "description": "The coupon code the user used for the checkout, if any", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": ["string", "null"] }
+            },
+            "additionalProperties": false,
+            "required": ["Product Count", "Cart Amount Total", "Cart Amount Tax", "Cart Amount Shipping", "Cart Amount Revenue", "Payment Method"]
+          }
+        }
+      }
+    },
+    {
+      "id": "pageViewedRef",
+      "name": "Page Viewed",
+      "_pattern": "Canonical non-funnel state event. Reusable across the product; segmented by `Page Name` / `Page Category`. Demonstrates the `Previous X` pattern for navigation context and nullable types.",
+      "eventType": "event",
+      "description": "Event sent when a user lands on a new page on web or screen on mobile",
+      "categories": ["dm7Lgjp4I"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Page Name": { "id": "e1o9Q93EbR", "index": 0, "description": "The name of the page related to this event", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Page Category": { "id": "zHN3KGUWh0", "index": 1, "description": "The category of the page/screen related to this event", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Page URL": { "id": "wdlwo7-9vG", "index": 2, "description": "The URL of the page related to this event. Only relevant for web events", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": ["string", "null"] },
+              "Previous Page Name": { "id": "2fwAaKeNC1", "index": 3, "description": "The name of the page/screen that the user navigated from", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Previous Page Category": { "id": "R57Xstjad1", "index": 4, "description": "The category of the page/screen the user navigated from", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Previous Page URL": { "id": "9_w81_Gghs", "index": 5, "description": "The URL of the page/screen the user navigated from. Only relevant on web", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": ["string", "null"] }
+            },
+            "additionalProperties": false,
+            "required": ["Page Name", "Page Category", "Previous Page Name", "Previous Page Category"]
+          }
+        }
+      }
+    },
+    {
+      "id": "HwJAMUhv5J",
+      "name": "Search Result Selected",
+      "_pattern": "Deep event: one action with multiple segmenting properties. Demonstrates `X Count`, `X Index` (with minimum constraint), and `Selected X` naming.",
+      "eventType": "event",
+      "description": "Event sent when a user selects a search result",
+      "categories": ["kq2ARfBc0"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Search Term": { "id": "xzAthKXFSe", "index": 0, "description": "The search term in the search input when this event is sent", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Search Result Count": { "id": "yzGSkc43nh", "index": 1, "description": "The number of search results that the user received when making the search", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "integer", "multipleOf": 1, "minimum": 0 },
+              "Search Input Location": { "id": "_oL2JKmPOs", "index": 2, "description": "The location of the search input related to this event", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" },
+              "Selected Search Result Index": { "id": "PRGeF37p9k", "index": 3, "description": "The index of the search result interacted with. Top one has index 1.", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "integer", "multipleOf": 1, "minimum": 1 },
+              "Selected Search Result Title": { "id": "KNuFaUeSUR", "index": 4, "description": "The title of the search result that the user selected", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string" }
+            },
+            "additionalProperties": false,
+            "required": ["Search Term", "Search Result Count", "Search Input Location", "Selected Search Result Index", "Selected Search Result Title"]
+          }
+        }
+      }
+    },
+    {
+      "id": "PrfCfgQ7p3",
+      "name": "Profile Configured",
+      "_pattern": "Deep event for a configuration action. Demonstrates the alternative to fragmenting one action into many shallow events (`Profile Picture Updated` / `User Name Updated` / `Birth Date Updated` as separate events). One event carries `Profile Configuration Action` (Add / Update / Remove) and `Profile Configured Item` (which profile field) so analysts can answer both 'how often is the profile configured?' and 'which item is changed most often?' from a single event stream. Modeled after `Product List Configured` in the original full-plan seed.",
+      "eventType": "event",
+      "description": "Event sent when a user configures an item on their profile (adding, updating, or removing a profile field).",
+      "categories": ["prfCat3X9"],
+      "actions": ["logEvent"],
+      "rules": {
+        "$schema": "http://json-schema.org/draft-06/schema#",
+        "type": "object",
+        "required": ["properties", "nameMapping"],
+        "nameMapping": [],
+        "properties": {
+          "properties": {
+            "type": "object",
+            "properties": {
+              "Profile Configuration Action": { "id": "PrfActX8jQ", "index": 0, "description": "How the user configured the profile field: did they add a new value, update an existing one, or remove one?", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string", "enum": ["Add", "Update", "Remove"] },
+              "Profile Configured Item": { "id": "PrfItmRm4P", "index": 1, "description": "Which profile field the user configured.", "nameMapping": [], "isSystemProperty": false, "tags": [], "type": "string", "enum": ["Profile Picture", "User Name", "Birth Date", "Gender", "Email Address", "Phone Number"] }
+            },
+            "additionalProperties": false,
+            "required": ["Profile Configuration Action", "Profile Configured Item"]
+          }
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "UeJgCO1cu": {
+      "id": "UeJgCO1cu",
+      "name": "Conversion: Signup Started -> Signup Completed",
+      "_pattern": "Canonical conversion metric name: `Conversion: <Start Event> -> <End Event>`. Self-documenting.",
+      "description": "The conversion rate from starting signup by clicking the signup button on the landing page to successfully completing signup. Useful to understand the performance of the signup flow and compare it to industry standards.",
+      "categories": ["kroTzNQSW"],
+      "type": "Funnel",
+      "items": [
+        { "eventId": "Xi5LgY7SNU", "where": [], "groupBy": [] },
+        { "eventId": "BxWN0SB8dq", "where": [], "groupBy": [] }
+      ]
+    },
+    "pgIzzWcjf": {
+      "id": "pgIzzWcjf",
+      "name": "Signups by authentication method",
+      "_pattern": "Canonical segmentation metric: one event grouped by one property. Name describes the segmentation, not the events.",
+      "description": "Segmenting signups by authentication method is useful to understand which signup methods are popular and which should be featured on the signup page.",
+      "categories": ["kroTzNQSW"],
+      "type": "Funnel",
+      "items": [
+        {
+          "eventId": "BxWN0SB8dq",
+          "where": [],
+          "groupBy": [{ "propertyId": "u1-GxIrDyH" }]
+        }
+      ]
+    }
+  },
+  "categories": {
+    "kroTzNQSW": {
+      "id": "kroTzNQSW",
+      "name": "Authentication",
+      "description": "",
+      "metrics": ["UeJgCO1cu", "pgIzzWcjf"],
+      "events": ["Xi5LgY7SNU", "DOWOxzMMB1", "BxWN0SB8dq"]
+    },
+    "4mvFAiDDq": {
+      "id": "4mvFAiDDq",
+      "name": "Purchase",
+      "description": "",
+      "metrics": [],
+      "events": ["qqPurchStrt", "lS0DI2pOjn", "9pIHGmLQLD"]
+    },
+    "dm7Lgjp4I": {
+      "id": "dm7Lgjp4I",
+      "name": "Navigation",
+      "description": "",
+      "metrics": [],
+      "events": ["pageViewedRef"]
+    },
+    "kq2ARfBc0": {
+      "id": "kq2ARfBc0",
+      "name": "Search",
+      "description": "",
+      "metrics": [],
+      "events": ["HwJAMUhv5J"]
+    },
+    "prfCat3X9": {
+      "id": "prfCat3X9",
+      "name": "Profile",
+      "description": "Profile setup and configuration events.",
+      "metrics": [],
+      "events": ["PrfCfgQ7p3"]
+    }
+  },
+  "sources": {},
+  "destinations": {},
+  "propertyGroups": {}
+}
