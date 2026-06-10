@@ -1,13 +1,13 @@
 ---
-name: avo-mcp
-description: Work with an existing Avo tracking plan through the Avo MCP. Use to explore and search events, properties, and metrics; look items up by exact name or id; list items by structural filters; review and prioritize branches; design tracking for a new feature or PRD against the existing plan; make small branch edits (rename, allowed values, attach properties); implement a branch's changes in source code; and combine Avo with a data MCP (Amplitude, Mixpanel, PostHog, BigQuery, Snowflake, Databricks, Redshift) to diagnose tracking gaps. Triggers on "what events do we have for", "how is X tracked", "add tracking for", "design tracking for", "review the X branch", "what's on branch X", "implement the X branch for [source]", "look up [event/property/metric]", and analysis prompts like "where are users dropping off" or "how is [funnel] performing". If the workspace is empty or brand-new, use the avo-mcp-new-tracking-plan skill instead.
+name: data-designer
+description: Work with an existing Avo tracking plan through the Avo MCP. Use to explore and search events, properties, and metrics; look items up by exact name or id; list items by structural filters; review and prioritize branches; design tracking for a new feature or PRD against the existing plan; make small branch edits (rename, allowed values, attach properties); implement a branch's changes in source code; and combine Avo with a data MCP (Amplitude, Mixpanel, PostHog, BigQuery, Snowflake, Databricks, Redshift) to diagnose tracking gaps. Triggers on "what events do we have for", "how is X tracked", "add tracking for", "design tracking for", "review the X branch", "what's on branch X", "implement the X branch for [source]", "look up [event/property/metric]", and analysis prompts like "where are users dropping off" or "how is [funnel] performing". If the workspace is empty or brand-new, use the data-designer-new-plan skill instead.
 ---
 
 # Avo MCP
 
 This skill teaches the agent how to use the Avo MCP server to read and write a customer's *existing* tracking plan. It is the playbook for exploring, searching, designing-against, reviewing, and implementing a plan that already has a meaningful taxonomy, plus the policies and gotchas that keep agents from breaking main.
 
-If the workspace is empty or brand-new and the team is deciding what to track from scratch, use the **avo-mcp-new-tracking-plan** skill instead. Quick empty check: run `search` with `itemType: "event"` and no `query`; very few results means greenfield — switch to that skill.
+If the workspace is empty or brand-new and the team is deciding what to track from scratch, use the **data-designer-new-plan** skill instead. Quick empty check: run `search` with `itemType: "event"` and no `query`; very few results means greenfield — switch to that skill.
 
 The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
@@ -144,13 +144,13 @@ A customer will rarely hand you a clean brief. Expect "create events for onboard
 4. **Anchor a purpose** — if the prompt names no goal, ask (or state the assumption for) which metric or funnel the events serve. Design to the question the data must answer, not to the feature.
 5. **Deliver** events (each in a category) **plus at least one metric you propose** (e.g. a conversion or drop-off funnel metric), tied to that purpose, in the workspace convention.
 
-This skill covers the **existing-plan** case — follow **Flow 7** below; its steps elaborate each point. If recon shows the workspace is empty or near-empty, switch to the **avo-mcp-new-tracking-plan** skill (Flow 6, Kick off a new taxonomy).
+This skill covers the **existing-plan** case — follow **Flow 7** below; its steps elaborate each point. If recon shows the workspace is empty or near-empty, switch to the **data-designer-new-plan** skill (Flow 6, Kick off a new taxonomy).
 
 ---
 
 ## Flow 7: Design data for a product update
 
-The big write flow. Takes a product requirement file or designs and produces a tracking plan branch. Use when the workspace already has a meaningful taxonomy and the user is adding to it; if the workspace is empty, use the **avo-mcp-new-tracking-plan** skill instead.
+The big write flow. Takes a product requirement file or designs and produces a tracking plan branch. Use when the workspace already has a meaningful taxonomy and the user is adding to it; if the workspace is empty, use the **data-designer-new-plan** skill instead.
 
 Trigger prompts:
 - "Design tracking for this product requirement file"

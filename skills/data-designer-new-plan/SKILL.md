@@ -1,13 +1,13 @@
 ---
-name: avo-mcp-new-tracking-plan
-description: Bootstrap a brand-new Avo tracking plan from scratch through the Avo MCP. Use when the workspace is empty or near-empty and the team is deciding what to track — runs a purpose meeting (problems, goals, metrics, key funnels), proposes a naming convention (structure/casing/tense), a starting set of categories, and start-milestone-complete events with event/user/system properties and constraints, then creates a branch. Triggers on "we're new to Avo", "where do we start", "set up tracking from scratch", "what should we track", "bootstrap a tracking plan", "design our first tracking plan". If the workspace already has a substantial plan, use the avo-mcp skill instead.
+name: data-designer-new-plan
+description: Bootstrap a brand-new Avo tracking plan from scratch through the Avo MCP. Use when the workspace is empty or near-empty and the team is deciding what to track — runs a purpose meeting (problems, goals, metrics, key funnels), proposes a naming convention (structure/casing/tense), a starting set of categories, and start-milestone-complete events with event/user/system properties and constraints, then creates a branch. Triggers on "we're new to Avo", "where do we start", "set up tracking from scratch", "what should we track", "bootstrap a tracking plan", "design our first tracking plan". If the workspace already has a substantial plan, use the data-designer skill instead.
 ---
 
 # Avo MCP — Kick Off a New Tracking Plan
 
 This skill teaches the agent how to bootstrap a brand-new Avo tracking plan from scratch through the Avo MCP server: confirm the workspace is empty, run a purpose meeting, agree a naming convention, and seed the first categories, events, properties, and metrics — then create a branch.
 
-For working with an *existing*, substantial tracking plan — exploring and searching, looking items up, designing tracking against what's already there, reviewing and implementing branches, cross-MCP analysis — use the **avo-mcp** skill instead. Quick empty check: run `search` with `itemType: "event"` and no `query`; if it returns very few results, you're greenfield and this skill applies. If the plan is substantial, switch to **avo-mcp**.
+For working with an *existing*, substantial tracking plan — exploring and searching, looking items up, designing tracking against what's already there, reviewing and implementing branches, cross-MCP analysis — use the **data-designer** skill instead. Quick empty check: run `search` with `itemType: "event"` and no `query`; if it returns very few results, you're greenfield and this skill applies. If the plan is substantial, switch to **data-designer**.
 
 The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
@@ -48,7 +48,7 @@ A customer will rarely hand you a clean brief. Expect "create events for onboard
 4. **Anchor a purpose** — if the prompt names no goal, ask (or state the assumption for) which metric or funnel the events serve. Design to the question the data must answer, not to the feature.
 5. **Deliver** events (each in a category) **plus at least one metric you propose** (e.g. a conversion or drop-off funnel metric), tied to that purpose, in the workspace convention.
 
-This skill covers the **empty / near-empty** case — follow **Flow 6** below. If recon shows the plan is already substantial, switch to the **avo-mcp** skill (Flow 7, Design data for a product update).
+This skill covers the **empty / near-empty** case — follow **Flow 6** below. If recon shows the plan is already substantial, switch to the **data-designer** skill (Flow 7, Design data for a product update).
 
 ---
 
@@ -65,7 +65,7 @@ Trigger prompts:
 
 Steps:
 
-1. Confirm the workspace is empty or near-empty. Run `search` with `itemType: "event"` and no `query` (filter listing mode); if it returns very few results, treat this as a fresh start. If the plan is substantial, redirect to the **avo-mcp** skill (Flow 7, Design data for a product update).
+1. Confirm the workspace is empty or near-empty. Run `search` with `itemType: "event"` and no `query` (filter listing mode); if it returns very few results, treat this as a fresh start. If the plan is substantial, redirect to the **data-designer** skill (Flow 7, Design data for a product update).
 2. Ask the user about the product. What does the product do, who are the users, and what stage of growth is it at? Keep this short; one or two sentences is enough to anchor the rest.
 3. Run the purpose meeting checklist with the user before designing anything:
    - "What topics does this release cover?"
