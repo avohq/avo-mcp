@@ -4,6 +4,36 @@
 
 Each skill is a self-contained directory with a `SKILL.md` (instructions + metadata) and bundled resources. Claude loads them automatically when relevant to guide effective use of the Avo MCP server's tools (`search`, `get`, `save_items`, `workflow`, and the branch tools).
 
+## Installing the Avo MCP server
+
+The Avo MCP server is a remote, OAuth-protected HTTP server at `https://mcp.avo.app/mcp`. Add it to your MCP client:
+
+**Claude Code (CLI)**
+
+```bash
+claude mcp add --transport http avo https://mcp.avo.app/mcp
+```
+
+You'll sign in through the browser on first use. The first time you make a change, you'll also get a one-time read → write re-auth prompt.
+
+**Claude.ai / Claude Desktop**
+
+Add a custom connector pointing at `https://mcp.avo.app/mcp` (Settings → Connectors → Add custom connector), or find **Avo** in the MCP Directory. Authenticate when prompted.
+
+**Cursor and other MCP clients**
+
+Add a remote (streamable HTTP) MCP server to your client's config:
+
+```json
+{
+  "mcpServers": {
+    "avo": { "type": "http", "url": "https://mcp.avo.app/mcp" }
+  }
+}
+```
+
+> If you install the Claude Code **plugin** (below), it registers this server for you — these steps are for connecting the server directly (other clients, or Claude Code without the plugin).
+
 ## Skills
 
 ### `data-designer` — Work with an existing Avo tracking plan
