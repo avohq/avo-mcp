@@ -1,5 +1,7 @@
 # Avo MCP
 
+mcp-name: io.github.avohq/avo
+
 The **Avo MCP server** (`https://mcp.avo.app/mcp`) lets Claude, Codex, Cursor, Gemini, and other MCP clients read and edit your [Avo](https://www.avo.app) tracking plan. This repo also ships [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) and a Claude Code plugin that guide effective use of the server.
 
 Each skill is a self-contained directory with a `SKILL.md` (instructions + metadata) and bundled resources. Claude loads them automatically when relevant to guide effective use of the Avo MCP server's tools (`search`, `get`, `save_items`, `workflow`, and the branch tools).
