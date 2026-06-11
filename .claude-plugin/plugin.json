@@ -1,0 +1,12 @@
+{
+  "name": "avo",
+  "version": "0.1.0",
+  "description": "Work with your Avo tracking plan in Claude Code: explore, search, and design events, properties, and metrics; review and implement branches — backed by the Avo MCP server. Bundles the data-designer (existing plan) and data-designer-new-plan (greenfield) skills and registers the Avo MCP server.",
+  "author": {
+    "name": "Avo",
+    "url": "https://www.avo.app"
+  },
+  "homepage": "https://www.avo.app",
+  "repository": "https://github.com/avohq/avo-mcp",
+  "keywords": ["avo", "analytics", "tracking-plan", "mcp", "events", "metrics"]
+}
