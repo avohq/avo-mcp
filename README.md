@@ -23,8 +23,8 @@ Bootstrap a tracking plan from scratch in an empty or near-empty workspace: run 
 This repo is also a Claude Code plugin marketplace. Installing the `avo` plugin bundles both skills **and** registers the Avo MCP server (`https://mcp.avo.app/mcp`) in one step:
 
 ```bash
-claude plugin marketplace add avohq/avo-mcp-skills
-claude plugin install avo@avo-mcp-skills
+claude plugin marketplace add avohq/avo-mcp
+claude plugin install avo@avo-mcp
 ```
 
 The plugin's layout:

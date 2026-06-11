@@ -7,6 +7,6 @@
     "url": "https://www.avo.app"
   },
   "homepage": "https://www.avo.app",
-  "repository": "https://github.com/avohq/avo-mcp-skills",
+  "repository": "https://github.com/avohq/avo-mcp",
   "keywords": ["avo", "analytics", "tracking-plan", "mcp", "events", "metrics"]
 }
