@@ -1,6 +1,6 @@
 # Avo MCP
 
-The **Avo MCP server** (`https://mcp.avo.app/mcp`) lets Claude and other MCP clients read and edit your [Avo](https://www.avo.app) tracking plan. This repo also ships [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) and a Claude Code plugin that guide effective use of the server.
+The **Avo MCP server** (`https://mcp.avo.app/mcp`) lets Claude, Codex, Cursor, Gemini, and other MCP clients read and edit your [Avo](https://www.avo.app) tracking plan. This repo also ships [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) and a Claude Code plugin that guide effective use of the server.
 
 Each skill is a self-contained directory with a `SKILL.md` (instructions + metadata) and bundled resources. Claude loads them automatically when relevant to guide effective use of the Avo MCP server's tools (`search`, `get`, `save_items`, `workflow`, and the branch tools).
 
@@ -18,7 +18,7 @@ You'll sign in through the browser on first use. The first time you make a chang
 
 **Claude.ai / Claude Desktop**
 
-Add a custom connector pointing at `https://mcp.avo.app/mcp` (Settings → Connectors → Add custom connector), or find **Avo** in the MCP Directory. Authenticate when prompted.
+Add a custom connector pointing at `https://mcp.avo.app/mcp` (Settings → Connectors → Add custom connector). Authenticate when prompted.
 
 **Cursor and other MCP clients**
 
@@ -79,4 +79,4 @@ All writes happen on a branch, never on `main`; the MCP never merges — merging
 
 ## Source
 
-This repo is the source of truth for these skills, and they're also submitted to the Claude MCP Directory. Avo's internal tooling syncs them from here (there's no build step to run in this repo). For the canonical, always-current Avo MCP tool list, see the [Avo MCP tools reference](https://www.avo.app/docs/reference/avo-mcp/tools).
+This repo is the source of truth for these skills. Avo's internal tooling syncs them from here (there's no build step to run in this repo). For the canonical, always-current Avo MCP tool list, see the [Avo MCP tools reference](https://www.avo.app/docs/reference/avo-mcp/tools).
