@@ -260,7 +260,7 @@ Trigger prompts:
 Steps:
 
 1. `list_branches` to confirm the `branchId`.
-2. `get(type:"source")` to resolve `sourceId` — returns the workspace's sources as a markdown table; pick the matching `id` from the table.
+2. `search(itemType:"source")` to resolve `sourceId` — returns the workspace's sources as a markdown table; pick the matching `id` from the table.
 3. If the user specified a source in their prompt: skip to step 5.
 4. If no source was specified: return the list of sources and ask which source(s) they want the diff for. Wait for the user to specify.
 5. `get_branch_code_snippets` for the requested source. One source at a time; this tool is expensive.
