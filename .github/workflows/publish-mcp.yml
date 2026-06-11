@@ -1,0 +1,38 @@
+name: Publish to MCP Registry
+
+# Publishes server.json to registry.modelcontextprotocol.io under
+# io.github.avohq/avo, authenticating via GitHub Actions OIDC (no secrets).
+#
+# Runs when server.json changes on main, or manually via "Run workflow".
+# The registry rejects duplicate versions, so bump "version" in server.json
+# as part of any change you want published.
+
+on:
+  push:
+    branches: [main]
+    paths: ["server.json"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC token for registry authentication
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Validate server.json
+        run: ./mcp-publisher validate
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server to MCP Registry
+        run: ./mcp-publisher publish
