@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.avohq/avo",
   "title": "Avo",
-  "description": "Define, ship & query your analytics from one source of truth, trusted by humans and AI agents.",
+  "description": "Define, ship & query your analytics tracking from one source of truth, trusted by humans and agents.",
   "version": "1.0.0",
   "websiteUrl": "https://www.avo.app/docs/reference/avo-mcp/tools",
   "repository": {
