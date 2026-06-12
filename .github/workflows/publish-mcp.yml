@@ -1,0 +1,56 @@
+name: MCP Registry
+
+# Validates and publishes server.json to registry.modelcontextprotocol.io
+# under io.github.avohq/avo, authenticating via GitHub Actions OIDC (no secrets).
+#
+# - validate: runs on every PR commit that touches server.json, and before publish.
+# - publish: runs when server.json changes on main, or manually via "Run workflow".
+#   The registry rejects duplicate versions, so bump "version" in server.json
+#   as part of any change you want published.
+
+on:
+  push:
+    branches: [main]
+    paths: ["server.json"]
+  pull_request:
+    paths: ["server.json"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Validate server.json
+        run: ./mcp-publisher validate
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC token for registry authentication
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server to MCP Registry
+        run: ./mcp-publisher publish
