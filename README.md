@@ -82,3 +82,9 @@ All writes happen on a branch, never on `main`; the MCP never merges — merging
 ## Source
 
 This repo is the source of truth for these skills. Avo's internal tooling syncs them from here (there's no build step to run in this repo). For the canonical, always-current Avo MCP tool list, see the [Avo MCP tools reference](https://www.avo.app/docs/reference/avo-mcp/tools).
+
+## License
+
+The contents of this repository — the `data-designer` and `data-designer-new-plan` Agent Skills and the plugin manifest and configuration — are released under the [MIT License](./LICENSE).
+
+This covers **only the files in this repository**. It grants no rights to the Avo MCP server (`https://mcp.avo.app/mcp`), the Avo web application, Avo SDKs, or any other Avo software or service — these are separate works, governed by Avo's [Terms of Service](https://www.avo.app/l/terms) and your agreement with Avo.
