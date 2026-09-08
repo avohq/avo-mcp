@@ -11,11 +11,28 @@ If the workspace is empty or brand-new and the team is deciding what to track fr
 
 The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
-Read tools: `health_check`, `list_workspaces`, `get`, `search`, `list_branches`, `get_branch_details`, `get_branch_implementation_guide`, `get_branch_code_snippets`.
+Read tools: `list_workspaces`, `describe_tool`, `search`, `get`, `list_branches`, `give_feedback`.
 
-`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `propertyBundle`, `source`, `destination`, `groupType`, `eventVariant`, and `workspaceConfig`. Use `type: "workspaceConfig"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+`describe_tool` tells you what a call accepts. The tool definitions sent on connect are deliberately short, so call `describe_tool()` for an overview of every tool and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
 
-Write tools (require the `write` scope): `workflow`, `save_items`.
+`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `event_variant`, `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+
+Write tools (require the `write` scope): `workflow` (actions `create_branch`, `update_branch_description`, `pull_main`, `set_source_language`, `import`) and `save_items`.
+
+Every `save_items` item has the shape `{op, type, id?, name?, tempId?, fields?}`: `op` is `create` (default), `update`, `archive`, or `unarchive`; `type` is one of `event`, `property`, `event_variant`, `property_bundle`, `metric`, `category`, `source`, `destination`, `group_type`; `id` is the identity id on update/archive/unarchive (`event_variant` passes `baseEventId` + `variantId` inside `fields`); `name` is required on every create; `tempId` is create-only and referenced as `"$tmp:<tempId>"`; `fields` holds the type-specific fields exactly as `describe_tool` lists them. Scalar edits (renames, description, type) go in `fields.set`; collection changes (`addProperties`, `addAllowedValues`, `addCategories`, …) stay at the top level of `fields`. `description` is create-only (on update use `set.description`). Unknown keys are rejected with an error that repeats the fields the type accepts.
+
+```json
+{
+  "branchId": "<branch>",
+  "items": [
+    { "op": "create", "type": "property", "tempId": "checkout_method", "name": "Checkout Method",
+      "fields": { "description": "How the user paid.", "propertyType": "string", "sendAs": "event", "addAllowedValues": ["Card", "Apple Pay"] } },
+    { "op": "create", "type": "event", "name": "Checkout Completed",
+      "fields": { "description": "Sent when a user successfully pays and their order is placed.", "properties": ["$tmp:checkout_method"], "sources": ["<sourceId>"] } },
+    { "op": "update", "type": "property", "id": "<propertyId>", "fields": { "set": { "name": "Email" } } }
+  ]
+}
+```
 
 The MCP never merges. Merging a branch to main always remains a human step in the Avo web app.
 
@@ -101,11 +118,11 @@ Trigger prompts and how each maps to filter fields:
 
 Steps:
 
-1. Pick `itemType` from the user's phrasing: `event` (default), `property`, `metric`, `eventVariant`, `category`, or `propertyBundle`.
+1. Pick `itemType` from the user's phrasing: `event` (default), `property`, `metric`, `event_variant`, `category`, `property_bundle`, or — to enumerate workspace metadata — `source`, `destination`, `group_type`, `journey`.
 2. Translate the phrasing into one or more filter fields: `tags`, `categories`, `sources`, `eventNames`, `variantNames`, `properties`, `nameMapping`. Multiple values in one array are OR'd. Multiple keys are AND'd.
 3. Call `search` with those filters and no `query` field. This is filter listing mode (cap 500, default 10). Set `includeVariants: true` when the user asks for events with their variants.
 4. Return: a one-line summary of what was filtered for ("Events with the `product_id` property"), then the list of results.
-5. If the result set hits `maxResults` and there is a `nextPageToken`, offer to paginate.
+5. If the result set hits `maxResults` and there is a `nextPageToken`, offer to paginate. When you do, repeat every original parameter (`workspaceId`, `itemType`, filters, branch, `maxResults`) plus `pageToken` — the token alone is not enough, and omitting `workspaceId` can resolve the next page against a different workspace.
 
 Notes:
 
@@ -119,7 +136,7 @@ Notes:
 
 ## Flow 5: Review a journey
 
-Look up how a journey is defined. Journeys are not yet exposed through the Avo MCP, so the agent falls back to matching metrics, which often capture the same intent.
+Look up how a journey is defined. Journeys are read-only in the Avo MCP: they can be listed and fetched, not written.
 
 Trigger prompts:
 - "How is the signup flow defined?"
@@ -128,9 +145,10 @@ Trigger prompts:
 
 Steps:
 
-1. `search` for matching metrics. Use semantic mode if Smart Search is on (`query: "<user's phrasing>"`, `itemType: "metric"`). Otherwise use filter mode on `itemType: "metric"` with the closest name-based filters.
-2. If one or more matching metrics are returned: present them with their event composition and properties, framed as the closest available answer to the user's question.
-3. If no matching metrics are found: tell the user "I couldn't find any matching metrics for your question, and journeys are not available yet in the Avo MCP."
+1. `search` with `itemType: "journey"` — semantic mode if Smart Search is on (`query: "<user's phrasing>"`), otherwise filter mode with no `query` to list journeys and pick by name.
+2. `get` with `type: "journey"` and the journey's `id` for the full definition.
+3. Present the journey with its steps and the events and properties it references. If no journey matches, fall back to matching metrics (`itemType: "metric"`), which often capture the same intent, and say so.
+4. If the user wants to change the journey, tell them journeys are edited in the Avo web app; the MCP can only change the underlying events and properties on a branch.
 
 ---
 
@@ -139,7 +157,7 @@ Steps:
 A customer will rarely hand you a clean brief. Expect "create events for onboarding" or "add tracking for checkout" — and convert it, on your own initiative, into the full workflow below *before* you propose or create a single item. A short prompt is not permission to skip any of this.
 
 1. **Bootstrap** the workspace (Flow 1).
-2. **Read the rules** — `get { type: "workspaceConfig" }` — and state the casing, structure, and tense (and word choice, e.g. past tense, "clicked" vs "pressed") you will follow. Fall back to Avo's default only if none are configured, and say so.
+2. **Read the rules** — `get { type: "workspace_config" }` — and state the casing, structure, and tense (and word choice, e.g. past tense, "clicked" vs "pressed") you will follow. Fall back to Avo's default only if none are configured, and say so.
 3. **Recon with both lenses** — a semantic `search` (by meaning) **and** a structural filter `search` (by `categories` / `sources` / `properties`) — for items that already exist, and reuse them. The two lenses catch different things; running only one misses reusable items.
 4. **Anchor a purpose** — if the prompt names no goal, ask (or state the assumption for) which metric or funnel the events serve. Design to the question the data must answer, not to the feature.
 5. **Deliver** events (each in a category) **plus at least one metric you propose** (e.g. a conversion or drop-off funnel metric), tied to that purpose, in the workspace convention.
@@ -167,7 +185,7 @@ Steps:
    
    Wait for the user's response before continuing. Good tracking design starts from the question the data needs to answer, so this is a hard gate, not optional.
 3. **Recon with both lenses.** Run a semantic `search` (by meaning, e.g. `query: "onboarding"`) **and** a structural filter `search` (by `categories` / `sources` / `properties`, no `query`) to see which events and properties already exist — the two lenses surface different items. `get` the promising hits. Reuse aggressively; never create a duplicate of an event or property that already exists. Recon is required even when the prompt is one line.
-4. Read the workspace's tracking plan audit rules by calling `get` with `type: "workspaceConfig"` (which returns event naming, property naming, casing, and validation rules) to determine what naming convention to use for any new items you propose.
+4. Read the workspace's tracking plan audit rules by calling `get` with `type: "workspace_config"` (which returns event naming, property naming, casing, and validation rules) to determine what naming convention to use for any new items you propose.
    
    When proposing new items, always look at what already exists in this workspace's tracking plan and match the patterns you find there. Specifically:
    - **For events.** Look at existing event names, especially in the same category or area. Match their structure (object-action vs action-object), casing, tense, and word choice. If the user is adding a step to an existing funnel, follow the start/step/complete pattern already in use.
@@ -187,7 +205,7 @@ Branch on the user's response:
 - b) **Want to change something** → take the change, update the plan, and re-ask.
 - c) **Proceed to create a branch:**
    1. `workflow` with `action: create_branch` → returns `branchId`.
-   2. `save_items` (batch) with the planned events, properties, and variants. Use `tempId` for forward references inside the batch.
+   2. `describe_tool(tool:"save_items", type:"<type>", op:"create")` for each type you are about to write, then `save_items` (batch, max 50 items) with the planned events, properties, and variants as `{op, type, name, tempId?, fields}` items. Use `tempId` for forward references inside the batch.
    3. Return: a summary of what was done with a link to the branch. Recommend reviewing changes. Ask if they want to update the branch to "ready for review" and add reviewers.
    4. The user reviews in the Avo app and manually changes branch status and adds reviewers.
 
@@ -209,7 +227,7 @@ Steps:
    - If create: `workflow` with `action: create_branch` → returns `branchId`.
    - If use existing: `list_branches` or confirm the branch by name, then take that `branchId`.
 3. `get` to resolve each target by name → `eventId` / `propertyId`. Never invent ids.
-4. `save_items` with `op: update`, sending only the fields that change.
+4. `save_items` with `op: "update"`, the item's `id`, and only the fields that change inside `fields` (renames in `fields.set.name`; allowed values in `fields.addAllowedValues`; categories in `fields.addCategories`). Call `describe_tool(tool:"save_items", type:"<type>", op:"update")` first if you have not written that type yet this session.
 
 Context: this is the "non-editors making non-breaking changes" entry point, and it works equally well for editors making small fixes.
 
@@ -226,7 +244,7 @@ Trigger prompts:
 Steps:
 
 1. `list_branches` filtered by status `ready for review` and reviewer set to the current user.
-2. `get_branch_details` to read status and reviewers for each.
+2. `get` with `type: "branch"`, `branchId`, and `include: ["overview"]` to read status and reviewers for each.
 3. Return: the list of "ready for review" branches assigned to the user, ordered from oldest to newest by `creationDate` (the MCP does not expose a per-reviewer assignment timestamp; `creationDate` is the deterministic proxy for "has been waiting longest"). Ask which one they want to review.
 
 ---
@@ -242,10 +260,10 @@ Trigger prompts:
 Steps:
 
 1. `list_branches` to resolve the branch name to a `branchId`.
-2. `get_branch_implementation_guide` for the structured diff.
+2. `get` with `type: "branch"`, `branchId`, and `include: ["implementation_guide"]` (or `["all_changes"]`) for the structured diff.
 3. Return the structured diff. Ask if the user wants to see code snippets for any specific source (which is the entry point into Flow 11, Implement a branch).
 
-Note: this flow will be updated once journey triggers are returned in the MCP. If the branch touches a journey today, the structured diff covers the underlying event and property changes.
+Note: if the branch touches a journey, the structured diff covers the underlying event and property changes.
 
 ---
 
@@ -260,10 +278,10 @@ Trigger prompts:
 Steps:
 
 1. `list_branches` to confirm the `branchId`.
-2. `search(itemType:"source")` to resolve `sourceId` — returns the workspace's sources as a markdown table; pick the matching `id` from the table.
+2. `search` with `itemType: "source"` and no `query` to resolve `sourceId` — returns the workspace's sources as a markdown table; pick the matching `id` from the table.
 3. If the user specified a source in their prompt: skip to step 5.
 4. If no source was specified: return the list of sources and ask which source(s) they want the diff for. Wait for the user to specify.
-5. `get_branch_code_snippets` for the requested source. One source at a time; this tool is expensive.
+5. `get` with `type: "branch"`, `branchId`, `include: ["code_snippets"]`, and `sourceId` for the requested source. One source at a time; this call is expensive.
 6. Agent implements the branch changes locally and commits them. **Do not push automatically.** Summarize what was committed (files touched, commit message) and ask the user to confirm before running `git push`. If the user prefers a patch-only path (no commit, no push), offer to leave the changes uncommitted in the working tree instead.
 7. On user confirmation: push to git. Peer review happens in the customer's git workflow.
 8. Once the git branch is merged: ask the user if they want to merge the Avo branch (only when all branches are fully implemented), or ask whether to push the source changes into a different branch to merge. Provide the link to the diff view of the branch.
@@ -305,13 +323,13 @@ When the user names an **exact item** or pastes an id: use `get`. This is Flow 3
 
 When the user names a **structural relationship** ("events with property X", "metrics in category Y", "items mapped to Z"): use `search` in filter mode with no `query`. This is Flow 4.
 
-When the user asks about a **branch by name**: use `list_branches` to resolve, then `get_branch_details` for status and reviewers, then `get_branch_implementation_guide` for the diff.
+When the user asks about a **branch by name**: use `list_branches` to resolve, then `get` with `type: "branch"` — `include: ["overview"]` for status and reviewers, `include: ["implementation_guide"]` for the diff.
 
-Prefer `get_branch_implementation_guide` over `get_branch_code_snippets` for review intent. Snippets are expensive and rarely what review-mode users want.
+Prefer `include: ["implementation_guide"]` over `include: ["code_snippets"]` for review intent. Snippets are expensive and rarely what review-mode users want.
 
 Default branch for `get` is `main`. When inspecting items on a non-main branch, pass the branch explicitly.
 
-When the user (or a flow) needs the workspace's **audit rules** (naming convention, casing, validation rules) — for example before proposing new events or properties in Flow 6 or Flow 7 — use `get` with `type: "workspaceConfig"`. This is the canonical way to retrieve them; there is no separate audit-rules tool.
+When the user (or a flow) needs the workspace's **audit rules** (naming convention, casing, validation rules) — for example before proposing new events or properties in Flow 6 or Flow 7 — use `get` with `type: "workspace_config"`. This is the canonical way to retrieve them; there is no separate audit-rules tool.
 
 ---
 
@@ -321,7 +339,9 @@ Writes always happen on a branch. Never on main. The MCP never merges; merge sta
 
 The first write tool call in a session triggers a scope escalation browser prompt (read → write). Warn the user once that they will see a re-auth prompt, then proceed.
 
-Use `tempId` to cross-reference newly-created items inside a single `save_items` batch. A new property gets `tempId: "prop_new_1"`; a new event references it in its properties list by that same `tempId`. `tempId` only works within one batch; across batches, use the real id returned from the previous call.
+Before the first `save_items` write of a type in a session, call `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` and put the type-specific fields inside the item's `fields` object (see the item shape above). A validation error repeats the fields the type accepts — read it and retry rather than guessing.
+
+Use `tempId` to cross-reference newly-created items inside a single `save_items` batch. A new property gets `tempId: "prop_new_1"`; a new event references it in its `fields.properties` list as `"$tmp:prop_new_1"`. `tempId` only works within one batch (max 50 items); across batches, use the real id returned from the previous call.
 
 Batch aggressively. One `save_items` call with twenty items is preferred over twenty calls.
 
@@ -365,7 +385,7 @@ A naming convention may also include a set of allowed words. For example: "alway
 
 **Track actions, not UI elements.** `Signup Completed` is the action. `Complete Signup Button Clicked` is the UI. Names tied to UI elements rot the moment the button copy or layout changes. If button context matters, capture it as a property on the action event (`Button Copy`, `Button Location`).
 
-**Push back when the user proposes an anti-pattern name.** Do not silently accept a name you would not propose yourself. When the user offers a vague or UI-coupled name like `Button Clicked`, `Event Happened`, `User Action`, or `Page Loaded`, say what is missing (which button, which action's outcome, on which surface) and propose a clearer alternative that follows the workspace's audit rules (retrieved via `get` with `type: "workspaceConfig"`). If the user insists, capture their reasoning in the event description so the choice survives the conversation.
+**Push back when the user proposes an anti-pattern name.** Do not silently accept a name you would not propose yourself. When the user offers a vague or UI-coupled name like `Button Clicked`, `Event Happened`, `User Action`, or `Page Loaded`, say what is missing (which button, which action's outcome, on which surface) and propose a clearer alternative that follows the workspace's audit rules (retrieved via `get` with `type: "workspace_config"`). If the user insists, capture their reasoning in the event description so the choice survives the conversation.
 
 **Build deep events, not many shallow ones.** A deep event has many properties that describe variations of the same user action; a shallow event would split each of those variations into its own thin event. The alternative (`Profile Picture Updated`, `User Name Updated`, `Birth Date Updated` as separate shallow events) fragments analysis and inflates the plan. Prefer one deep `Profile Configured` event with a `Profile Configuration Action` (Add / Update / Remove) and a `Profile Configured Item` (which field) — see `examples/seed-taxonomy-reference.json` for the worked example.
 
@@ -469,7 +489,7 @@ Resolve names to ids before writing. Never invent ids, branch names, or property
 
 Semantic search requires Smart Search to be enabled in the workspace. Detect this on first failure and fall back to exact-name `get`, with a one-line nudge about enabling Smart Search.
 
-When the user asks about journeys today, fall back to matching metrics per Flow 5 and explicitly tell them journeys are not available yet in the MCP.
+Journeys are read-only in the MCP (Flow 5): list and fetch them with `search` / `get` and `type: "journey"`; edits happen in the Avo web app.
 
 Keep cross-MCP phrasing vendor-agnostic. Use "the connected data MCP" in user-facing messages.
 
@@ -479,7 +499,7 @@ Keep cross-MCP phrasing vendor-agnostic. Use "the connected data MCP" in user-fa
 
 Agents skip `list_workspaces` on the first prompt and pass an invented id. Always run Flow 1 first.
 
-Agents over-call `get_branch_code_snippets` when the user asked "what's on the branch." Prefer `get_branch_implementation_guide` for review intent.
+Agents over-request `code_snippets` when the user asked "what's on the branch." Prefer `implementation_guide` for review intent.
 
 Agents try to call write tools on the `read` scope and get an auth error mid-conversation. Warn the user about the scope escalation prompt before calling the first write tool, not after the error.
 
@@ -493,7 +513,9 @@ Agents propose vendor-specific commands in Flow 12 ("run this Amplitude query") 
 
 Agents name and describe events/properties after the implementation — algorithm/model names, internal field names, raw status enums, stats shorthand — instead of the data consumer's vocabulary. Translate every internal concept into product language and re-read each name/description as a stranger before saving (see "Write for the data consumer, not the implementation").
 
-`save_items` returns ids you need for future cross-batch references. Capture them in conversation state.
+`save_items` returns ids you need for future cross-batch references (created entries echo your `tempId` next to the real id). Capture them in conversation state.
+
+Agents put type-specific fields (`propertyType`, `properties`, `set`, …) directly on the item instead of inside `fields`, or use the old camelCase type names. Every item is `{op, type, id?, name?, tempId?, fields?}` with snake_case types; call `describe_tool` for the fields of a type and op.
 
 The first call to a write tool of a session opens a browser. On a headless or automated setup this fails; surface the error rather than retrying.
 
