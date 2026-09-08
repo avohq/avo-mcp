@@ -4,7 +4,7 @@ mcp-name: io.github.avohq/avo
 
 The **Avo MCP server** (`https://mcp.avo.app/mcp`) lets Claude, Codex, Cursor, Gemini, and other MCP clients read and edit your [Avo](https://www.avo.app) tracking plan. This repo also ships [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) and a Claude Code plugin that guide effective use of the server.
 
-Each skill is a self-contained directory with a `SKILL.md` (instructions + metadata) and bundled resources. Claude loads them automatically when relevant to guide effective use of the Avo MCP server's tools (`search`, `get`, `save_items`, `workflow`, and the branch tools).
+Each skill is a self-contained directory with a `SKILL.md` (instructions + metadata) and bundled resources. Claude loads them automatically when relevant to guide effective use of the Avo MCP server's tools (`describe_tool`, `search`, `get`, `save_items`, `workflow`, and the branch tools).
 
 ## Installing the Avo MCP server
 
@@ -78,6 +78,8 @@ cp -R skills/data-designer-new-plan ~/.claude/skills/data-designer-new-plan
 ## Writing model
 
 All writes happen on a branch, never on `main`; the MCP never merges — merging a branch into `main` is always a human step in the Avo web app.
+
+The advertised tool schemas are kept small on purpose so that every MCP client sees every tool. Per-type field contracts are served on demand: call `describe_tool()` for the capability map and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the fields of an item type before writing it. Each `save_items` item is an envelope `{op, type, id?, name?, tempId?, fields?}` with snake_case item types (`event_variant`, `property_bundle`, `group_type`, …); the camelCase spellings are deprecated aliases for one release.
 
 ## Source
 

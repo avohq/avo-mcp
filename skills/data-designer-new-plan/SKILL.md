@@ -11,11 +11,28 @@ For working with an *existing*, substantial tracking plan — exploring and sear
 
 The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
-Read tools: `health_check`, `list_workspaces`, `get`, `search`, `list_branches`, `get_branch_details`, `get_branch_implementation_guide`, `get_branch_code_snippets`.
+Read tools: `list_workspaces`, `describe_tool`, `search`, `get`, `list_branches`, `give_feedback`.
 
-`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `propertyBundle`, `source`, `destination`, `groupType`, `eventVariant`, and `workspaceConfig`. Use `type: "workspaceConfig"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+`describe_tool` is the on-demand contract index. The advertised tool schemas are deliberately small, so call `describe_tool()` for the capability map and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
 
-Write tools (require the `write` scope): `workflow`, `save_items`.
+`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `gateway`, `event_variant`, `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) are deprecated aliases. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+
+Write tools (require the `write` scope): `workflow` (actions `create_branch`, `update_branch_description`, `pull_main`, `set_source_language`, `import`) and `save_items`.
+
+Every `save_items` item is an envelope `{op, type, id?, name?, tempId?, fields?}`: `op` is `create` (default), `update`, `archive`, or `unarchive`; `type` is one of `event`, `property`, `event_variant`, `property_bundle`, `metric`, `category`, `source`, `destination`, `group_type`, `gateway`; `id` is the identity id on update/archive/unarchive (`event_variant` passes `baseEventId` + `variantId` inside `fields`); `name` is required on every create; `tempId` is create-only and referenced as `"$tmp:<tempId>"`; `fields` holds the type-specific fields exactly as `describe_tool` renders them. Scalar edits (renames, description, type) go in `fields.set`; collection changes (`addProperties`, `addAllowedValues`, `addCategories`, …) stay at the top level of `fields`. `description` is create-only (on update use `set.description`). Unknown keys are rejected with an error that echoes the type's contract.
+
+```json
+{
+  "branchId": "<branch>",
+  "items": [
+    { "op": "create", "type": "property", "tempId": "checkout_method", "name": "Checkout Method",
+      "fields": { "description": "How the user paid.", "propertyType": "string", "sendAs": "event", "addAllowedValues": ["Card", "Apple Pay"] } },
+    { "op": "create", "type": "event", "name": "Checkout Completed",
+      "fields": { "description": "Sent when a user successfully pays and their order is placed.", "properties": ["$tmp:checkout_method"], "sources": ["<sourceId>"] } },
+    { "op": "update", "type": "property", "id": "<propertyId>", "fields": { "set": { "name": "Email" } } }
+  ]
+}
+```
 
 The MCP never merges. Merging a branch to main always remains a human step in the Avo web app.
 
@@ -43,7 +60,7 @@ Hold the active `workspaceId` in conversation state for the rest of the session.
 A customer will rarely hand you a clean brief. Expect "create events for onboarding" or "add tracking for checkout" — and convert it, on your own initiative, into the full workflow below *before* you propose or create a single item. A short prompt is not permission to skip any of this.
 
 1. **Bootstrap** the workspace (Flow 1).
-2. **Read the rules** — `get { type: "workspaceConfig" }` — and state the casing, structure, and tense (and word choice, e.g. past tense, "clicked" vs "pressed") you will follow. Fall back to Avo's default only if none are configured, and say so.
+2. **Read the rules** — `get { type: "workspace_config" }` — and state the casing, structure, and tense (and word choice, e.g. past tense, "clicked" vs "pressed") you will follow. Fall back to Avo's default only if none are configured, and say so.
 3. **Recon with both lenses** — a semantic `search` (by meaning) **and** a structural filter `search` (by `categories` / `sources` / `properties`) — for items that already exist, and reuse them. The two lenses catch different things; running only one misses reusable items.
 4. **Anchor a purpose** — if the prompt names no goal, ask (or state the assumption for) which metric or funnel the events serve. Design to the question the data must answer, not to the feature.
 5. **Deliver** events (each in a category) **plus at least one metric you propose** (e.g. a conversion or drop-off funnel metric), tied to that purpose, in the workspace convention.
@@ -91,7 +108,7 @@ Steps:
    - **Event properties** specific to the action (e.g. `Authentication Method` on `Signup Completed`).
    - **User properties** describing state that persists across events (e.g. `Email`, `Subscription Status`).
    - **System properties** sent with all events (e.g. `Platform`, `App Version`).
-8. Read the workspace's tracking plan audit rules by calling `get` with `type: "workspaceConfig"` (which returns event naming, property naming, casing, and validation rules), and adjust proposed names to match.
+8. Read the workspace's tracking plan audit rules by calling `get` with `type: "workspace_config"` (which returns event naming, property naming, casing, and validation rules), and adjust proposed names to match.
 9. Return a complete proposal: convention, categories, events with descriptions, properties with descriptions and constraints, and **at least one metric you propose** (a conversion or drop-off funnel metric) tied to the funnel the user named. Anchor every event back to the problem or metric it serves. Ask the user one of:
    - a) Do they have questions about decisions made?
    - b) Do they want to change something?
@@ -101,7 +118,7 @@ Steps:
     - b) **Want to change something** → take the change, update the plan, and re-ask.
     - c) **Proceed to create a branch:**
        1. `workflow` with `action: create_branch` → returns `branchId`.
-       2. `save_items` (batch) with the planned categories, events, properties, and metrics. Use `tempId` for forward references inside the batch (a new property gets `tempId: "prop_new_1"`; a new event references it by that same `tempId`). Batch aggressively — one call with many items beats many calls.
+       2. `describe_tool(tool:"save_items", type:"<type>", op:"create")` for each type you are about to write, then `save_items` (batch, max 50 items) with the planned categories, events, properties, and metrics as `{op, type, name, tempId?, fields}` envelopes. Use `tempId` for forward references inside the batch (a new property gets `tempId: "prop_new_1"`; a new event lists `"$tmp:prop_new_1"` in `fields.properties`). Batch aggressively — one call with many items beats many calls. Categories cannot be attached to an event created in the same batch; attach them with an `update` in a follow-up call.
        3. Return: a summary of what was done with a link to the branch. Recommend reviewing changes. Ask if they want to update the branch to "ready for review" and add reviewers.
        4. The user reviews in the Avo app and manually changes branch status and adds reviewers. Merge is always a human step in the Avo web app.
 
@@ -119,11 +136,11 @@ When the user names an **exact item** or pastes an id: use `get`.
 
 When the user names a **structural relationship** ("events with property X", "metrics in category Y", "items mapped to Z"): use `search` in filter mode with no `query`.
 
-When the user asks about a **branch by name**: use `list_branches` to resolve, then `get_branch_details` for status and reviewers, then `get_branch_implementation_guide` for the diff.
+When the user asks about a **branch by name**: use `list_branches` to resolve, then `get` with `type: "branch"` — `include: ["overview"]` for status and reviewers, `include: ["implementation_guide"]` for the diff.
 
 Default branch for `get` is `main`. When inspecting items on a non-main branch, pass the branch explicitly.
 
-When you (or a flow) need the workspace's **audit rules** (naming convention, casing, validation rules) — for example before proposing new events or properties — use `get` with `type: "workspaceConfig"`. This is the canonical way to retrieve them; there is no separate audit-rules tool.
+When you (or a flow) need the workspace's **audit rules** (naming convention, casing, validation rules) — for example before proposing new events or properties — use `get` with `type: "workspace_config"`. This is the canonical way to retrieve them; there is no separate audit-rules tool.
 
 ---
 
@@ -133,7 +150,9 @@ Writes always happen on a branch. Never on main. The MCP never merges; merge sta
 
 The first write tool call in a session triggers a scope escalation browser prompt (read → write). Warn the user once that they will see a re-auth prompt, then proceed.
 
-Use `tempId` to cross-reference newly-created items inside a single `save_items` batch. A new property gets `tempId: "prop_new_1"`; a new event references it in its properties list by that same `tempId`. `tempId` only works within one batch; across batches, use the real id returned from the previous call.
+Before the first `save_items` write of a type in a session, call `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` and put the type-specific fields inside the item's `fields` object (see the envelope above). A validation error echoes the type's contract — read it and retry rather than guessing.
+
+Use `tempId` to cross-reference newly-created items inside a single `save_items` batch. A new property gets `tempId: "prop_new_1"`; a new event references it in its `fields.properties` list as `"$tmp:prop_new_1"`. `tempId` only works within one batch (max 50 items); across batches, use the real id returned from the previous call.
 
 Batch aggressively. One `save_items` call with twenty items is preferred over twenty calls.
 
@@ -177,7 +196,7 @@ A naming convention may also include a set of allowed words. For example: "alway
 
 **Track actions, not UI elements.** `Signup Completed` is the action. `Complete Signup Button Clicked` is the UI. Names tied to UI elements rot the moment the button copy or layout changes. If button context matters, capture it as a property on the action event (`Button Copy`, `Button Location`).
 
-**Push back when the user proposes an anti-pattern name.** Do not silently accept a name you would not propose yourself. When the user offers a vague or UI-coupled name like `Button Clicked`, `Event Happened`, `User Action`, or `Page Loaded`, say what is missing (which button, which action's outcome, on which surface) and propose a clearer alternative that follows the workspace's audit rules (retrieved via `get` with `type: "workspaceConfig"`). If the user insists, capture their reasoning in the event description so the choice survives the conversation.
+**Push back when the user proposes an anti-pattern name.** Do not silently accept a name you would not propose yourself. When the user offers a vague or UI-coupled name like `Button Clicked`, `Event Happened`, `User Action`, or `Page Loaded`, say what is missing (which button, which action's outcome, on which surface) and propose a clearer alternative that follows the workspace's audit rules (retrieved via `get` with `type: "workspace_config"`). If the user insists, capture their reasoning in the event description so the choice survives the conversation.
 
 **Build deep events, not many shallow ones.** A deep event has many properties that describe variations of the same user action; a shallow event would split each of those variations into its own thin event. The alternative (`Profile Picture Updated`, `User Name Updated`, `Birth Date Updated` as separate shallow events) fragments analysis and inflates the plan. Prefer one deep `Profile Configured` event with a `Profile Configuration Action` (Add / Update / Remove) and a `Profile Configured Item` (which field) — see `examples/seed-taxonomy-reference.json` for the worked example.
 
@@ -297,7 +316,9 @@ Agents name and describe events/properties after the implementation — algorith
 
 Agents try to call write tools on the `read` scope and get an auth error mid-conversation. Warn the user about the scope escalation prompt before calling the first write tool, not after the error.
 
-`save_items` returns ids you need for future cross-batch references. Capture them in conversation state.
+`save_items` returns ids you need for future cross-batch references (created entries echo your `tempId` next to the real id). Capture them in conversation state.
+
+Agents put type-specific fields (`propertyType`, `properties`, `set`, …) directly on the item instead of inside `fields`, or use the old camelCase type names. Every item is `{op, type, id?, name?, tempId?, fields?}` with snake_case types; call `describe_tool` for the fields of a type and op.
 
 The first call to a write tool of a session opens a browser. On a headless or automated setup this fails; surface the error rather than retrying.
 
