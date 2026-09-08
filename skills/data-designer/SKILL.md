@@ -13,13 +13,13 @@ The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
 Read tools: `list_workspaces`, `describe_tool`, `search`, `get`, `list_branches`, `give_feedback`.
 
-`describe_tool` is the on-demand contract index. The advertised tool schemas are deliberately small, so call `describe_tool()` for the capability map and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
+`describe_tool` tells you what a call accepts. The tool definitions sent on connect are deliberately short, so call `describe_tool()` for an overview of every tool and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
 
-`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `gateway`, `event_variant`, `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) are deprecated aliases. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `gateway`, `event_variant`, `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
 
 Write tools (require the `write` scope): `workflow` (actions `create_branch`, `update_branch_description`, `pull_main`, `set_source_language`, `import`) and `save_items`.
 
-Every `save_items` item is an envelope `{op, type, id?, name?, tempId?, fields?}`: `op` is `create` (default), `update`, `archive`, or `unarchive`; `type` is one of `event`, `property`, `event_variant`, `property_bundle`, `metric`, `category`, `source`, `destination`, `group_type`, `gateway`; `id` is the identity id on update/archive/unarchive (`event_variant` passes `baseEventId` + `variantId` inside `fields`); `name` is required on every create; `tempId` is create-only and referenced as `"$tmp:<tempId>"`; `fields` holds the type-specific fields exactly as `describe_tool` renders them. Scalar edits (renames, description, type) go in `fields.set`; collection changes (`addProperties`, `addAllowedValues`, `addCategories`, …) stay at the top level of `fields`. `description` is create-only (on update use `set.description`). Unknown keys are rejected with an error that echoes the type's contract.
+Every `save_items` item has the shape `{op, type, id?, name?, tempId?, fields?}`: `op` is `create` (default), `update`, `archive`, or `unarchive`; `type` is one of `event`, `property`, `event_variant`, `property_bundle`, `metric`, `category`, `source`, `destination`, `group_type`, `gateway`; `id` is the identity id on update/archive/unarchive (`event_variant` passes `baseEventId` + `variantId` inside `fields`); `name` is required on every create; `tempId` is create-only and referenced as `"$tmp:<tempId>"`; `fields` holds the type-specific fields exactly as `describe_tool` lists them. Scalar edits (renames, description, type) go in `fields.set`; collection changes (`addProperties`, `addAllowedValues`, `addCategories`, …) stay at the top level of `fields`. `description` is create-only (on update use `set.description`). Unknown keys are rejected with an error that repeats the fields the type accepts.
 
 ```json
 {
@@ -205,7 +205,7 @@ Branch on the user's response:
 - b) **Want to change something** → take the change, update the plan, and re-ask.
 - c) **Proceed to create a branch:**
    1. `workflow` with `action: create_branch` → returns `branchId`.
-   2. `describe_tool(tool:"save_items", type:"<type>", op:"create")` for each type you are about to write, then `save_items` (batch, max 50 items) with the planned events, properties, and variants as `{op, type, name, tempId?, fields}` envelopes. Use `tempId` for forward references inside the batch.
+   2. `describe_tool(tool:"save_items", type:"<type>", op:"create")` for each type you are about to write, then `save_items` (batch, max 50 items) with the planned events, properties, and variants as `{op, type, name, tempId?, fields}` items. Use `tempId` for forward references inside the batch.
    3. Return: a summary of what was done with a link to the branch. Recommend reviewing changes. Ask if they want to update the branch to "ready for review" and add reviewers.
    4. The user reviews in the Avo app and manually changes branch status and adds reviewers.
 
@@ -339,7 +339,7 @@ Writes always happen on a branch. Never on main. The MCP never merges; merge sta
 
 The first write tool call in a session triggers a scope escalation browser prompt (read → write). Warn the user once that they will see a re-auth prompt, then proceed.
 
-Before the first `save_items` write of a type in a session, call `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` and put the type-specific fields inside the item's `fields` object (see the envelope above). A validation error echoes the type's contract — read it and retry rather than guessing.
+Before the first `save_items` write of a type in a session, call `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` and put the type-specific fields inside the item's `fields` object (see the item shape above). A validation error repeats the fields the type accepts — read it and retry rather than guessing.
 
 Use `tempId` to cross-reference newly-created items inside a single `save_items` batch. A new property gets `tempId: "prop_new_1"`; a new event references it in its `fields.properties` list as `"$tmp:prop_new_1"`. `tempId` only works within one batch (max 50 items); across batches, use the real id returned from the previous call.
 

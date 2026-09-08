@@ -79,7 +79,7 @@ cp -R skills/data-designer-new-plan ~/.claude/skills/data-designer-new-plan
 
 All writes happen on a branch, never on `main`; the MCP never merges — merging a branch into `main` is always a human step in the Avo web app.
 
-The advertised tool schemas are kept small on purpose so that every MCP client sees every tool. Per-type field contracts are served on demand: call `describe_tool()` for the capability map and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the fields of an item type before writing it. Each `save_items` item is an envelope `{op, type, id?, name?, tempId?, fields?}` with snake_case item types (`event_variant`, `property_bundle`, `group_type`, …); the camelCase spellings are deprecated aliases for one release.
+The tool definitions the server sends on connect are kept short so that every MCP client sees every tool. The fields each item type accepts are fetched on demand: call `describe_tool()` for an overview of every tool and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the fields of an item type before writing it. Each `save_items` item has the shape `{op, type, id?, name?, tempId?, fields?}` with snake_case item types (`event_variant`, `property_bundle`, `group_type`, …); the camelCase spellings still work but are deprecated.
 
 ## Source
 
