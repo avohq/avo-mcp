@@ -34,17 +34,20 @@ For each new or modified event:
 1. Use the branch read of the event from Step 1 (`get`, `type: "event"`, `branchId`). Its **Triggers** section is the source of truth for where the event fires.
 2. For each trigger, keep: trigger name, journey, screen, screenshot URL, marker (`x`, `y`, `w`, `h`), and property conditions (e.g. `page_name is "Cart details"`). Standalone triggers have a description and maybe a screenshot.
 3. Real trigger data is often incomplete. Handle it explicitly:
-   - **No screen or no screenshot:** list the trigger by name and mark it "screen not documented".
+   - **No screen:** list the trigger by name and mark it "screen not documented".
+   - **A screen but no screenshot:** name the screen and mark it "no screenshot".
    - **Several triggers with the same name:** keep them apart by journey and screen; they usually fire on different screens.
    - **A bare trigger line with no id and no fields:** a label, not a trigger. Skip it.
    - **A condition you can't resolve** (e.g. the value to send isn't stated): say what you inferred and label it as an inference.
 4. If the event has no triggers at all, say so ("No trigger documented — confirm with the tracking plan owner") rather than guessing the firing moment from its name.
 
+For each **removed** event, `get` it on main (no `branchId`) for its name and where it fired today, so developers can find the call sites. Its handoff section says what to delete; it needs no payload table.
+
 Don't walk whole journeys for this: a journey read shows each screen's own events, not the triggers of the event you're handing off. Use it only if the user asks for the surrounding flow.
 
 ## Step 3: Collect the payload
 
-For each new or modified property on those events, `get` with `type: "property"` and `branchId`. Record type, presence, list or not, allowed values, and **event-specific allowed values** (a property may allow fewer values on this event than globally). The event read lists the event's properties but not their allowed values, so this property read is required.
+The payload table lists **every** property the event sends, not only what changed: developers implement the whole call. For each property on those events, `get` with `type: "property"` and `branchId`. Record type, presence, list or not, allowed values, and **event-specific allowed values** (a property may allow fewer values on this event than globally). The event read lists the event's properties but not their allowed values, so this property read is required.
 
 For object properties, the child fields aren't in the property read. Take them from the code snippet of a codegen source (Step 4), or `get` each child property by name.
 
@@ -65,7 +68,7 @@ When events pass through a gateway, what the code sends and what a destination r
 
 1. Use the impacted sources resolved in Step 1. Sources marked "not configured" have no language and no code snippets.
 2. For each configured source the user cares about (ask if there are more than three), `get` with `type: "branch"`, `branchId`, `include: ["code_snippets"]`, and `sourceId`. One source per call: this call is expensive.
-3. Keep the snippets **verbatim and complete**. Each event in the snippet output is tagged `[Codegen]` (exact generated code) or `[Pseudocode]` (illustrative, for manually instrumented sources); carry that label into the handoff.
+3. The output is already a per-event diff against main (`+` added, `-` removed lines), with `avo pull` or manual-removal guidance per event, including removed events. Keep it **verbatim and complete**. Each event in the snippet output is tagged `[Codegen]` (exact generated code) or `[Pseudocode]` (illustrative, for manually instrumented sources); carry that label into the handoff.
 
 ## Step 5: Build the handoff page
 
@@ -78,6 +81,9 @@ Status: <review status> · Avo branch: <link> · Sources: Web, iOS, Android
 ## Summary
 One line per event: new / modified / removed, and what changed.
 
+## <EVENT NAME> (removed)
+Where it fired on main, and which calls to delete per source.
+
 ## <EVENT NAME> (modified)
 ### Where it fires
 For each trigger: screen name, the screenshot with the trigger area highlighted,
@@ -85,7 +91,7 @@ what the user does, and the property condition ("page_name is \"Cart details\"")
 ### Payload
 | Property | Type | Presence | Allowed values on this event | New? |
 ### Code
-One block per source, full diff.
+One block per source: the code diff from Step 4, verbatim.
 ### What each destination receives (gateway workspaces only)
 | Destination | Arrives as | Renamed | Added by gateway | Dropped |
 
@@ -106,7 +112,7 @@ Present the page to the user before sharing or filing anything.
 ## Step 6: File the ticket (optional)
 
 1. Check which tracker MCP is connected (Jira, Linear, GitHub). If none, give the ticket body as Markdown for the user to paste.
-2. Draft the ticket from the page: summary, where it fires (with screenshots), payload table, code per platform, checklist, acceptance criteria, and a link back to the Avo branch and the handoff page.
+2. Draft the ticket from the page: summary, where it fires (with screenshots), payload table, code per platform, checklist, acceptance criteria, and a link back to the Avo branch. Link the handoff page only if it has a URL (for example a published page); otherwise put its content in the ticket. Never invent a link.
 3. Ask whether they want one ticket for the branch or one per platform. Show the draft and **create it only after the user confirms.**
 4. Screenshots: some trackers don't render external image URLs. Upload the images if the tracker's MCP supports it; otherwise link them.
 

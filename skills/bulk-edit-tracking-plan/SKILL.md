@@ -14,7 +14,7 @@ Teams often need the same change applied to dozens or hundreds of items: a desti
 
 The MCP never merges. The user reviews and merges in the Avo web app.
 
-If the `data-designer` skill is installed, its policies and design principles apply. Call `describe_tool(tool: "save_items", type: "<type>", op: "update")` before the first write of each type; field shapes in this file are illustrations, `describe_tool` is the contract.
+If the `data-designer` skill is installed, its policies and design principles apply. Call `describe_tool(tool: "save_items", type: "<type>", op: "<op>")` before the first write of each type and op (`update`, or `create` for the recipes that add new properties): the two ops take different fields. field shapes in this file are illustrations, `describe_tool` is the contract.
 
 ---
 
@@ -24,7 +24,7 @@ If the `data-designer` skill is installed, its policies and design principles ap
 2. Translate the user's selection into a **filter-mode** `search` (no `query`): `tags`, `categories`, `sources`, `destinations`, `eventNames`, `properties`, `nameMapping`, `pii`, `customField`, `owners`, `stakeholders`. Values in one array are OR'd; different keys are AND'd.
 3. Page through **every** result: pass `pageToken` and repeat every other parameter (`workspaceId`, `itemType`, filters, `branch`, `maxResults`) on each page. A selection that stops at page one silently changes 10 items out of 300.
 4. If the selection can't be expressed as filters ("all checkout-ish events"), use semantic search to propose a list, then have the user confirm the exact list. Semantic hits can come from other people's unmerged branches; keep only items whose `Branch` is `master` (main).
-5. **Properties "in" a category or on a set of events take two steps.** Categories usually hold events, not properties: list the events (`categories`), then the properties on them (`itemType: "property"`, `eventNames`). That listing doesn't include system properties or the child fields of object properties; add those deliberately if the change should cover them.
+5. **Properties "in" a category can mean two things.** `itemType: "property"` with `categories` returns the properties assigned to that category directly. If the user means the properties sent on the category's events, that takes two steps: list the events (`itemType: "event"`, `categories`), then the properties on them (`itemType: "property"`, `eventNames`). Ask which one they mean when it isn't clear. That listing doesn't include system properties or the child fields of object properties; add those deliberately if the change should cover them.
 
 State the selection back with a count: "47 properties with no PII declaration, across 12 categories."
 
@@ -56,8 +56,8 @@ Wait for approval. For owner/stakeholder changes, get explicit approval for that
 
 ## Step 4: Verify
 
-1. Re-run the Step 1 selection on the branch (`branch: <branchId>`) or a filter that should now match the changed state (e.g. `pii: {kind: "noPii"}` should return only the items you marked not-PII).
-2. `get` a sample of changed items on the branch and check the new values.
+1. Keep the ids of every item you selected in Step 1. A filter on the new state (e.g. `pii: {kind: "noPii"}`) can also return items that were already in that state, so it can't prove the batch worked on its own.
+2. Re-run the Step 1 selection on the branch (`branch: <branchId>`) and check that every selected id now has the new value; `get` the ones the listing doesn't show the changed field for. Report any id that didn't change.
 3. Report the before/after summary and the branch link.
 
 ---
@@ -69,7 +69,7 @@ Wait for approval. For owner/stakeholder changes, get explicit approval for that
 If `search` with `itemType: "gateway"` returns any gateways, a destination can receive something different from what the plan says:
 
 - **Selecting "everything that reaches X":** the `destinations` filter means *configured to send to X*, not *arrives at X*. Use `search` with `checkpoint: {kind: "destination", destinationId}` for what actually arrives (the two lists can differ a lot).
-- **Before adding a mapping, check the gateway.** `get` an event with the same checkpoint: if it already arrives under the target name ("sent as …"), the gateway output renames it and there's nothing to do.
+- **Before adding a mapping, check the gateway.** `get` the item you're mapping with the same checkpoint: the event for an event mapping, the property for a property mapping (an event arriving under the target name says nothing about its properties). If it already arrives under the target name ("sent as …"), the gateway output renames it and there's nothing to do.
 - **Change it at the output, not on the event.** Renames and allow-lists for one destination usually belong on the gateway's output. Use `save_items` with `type: "gateway"`, `op: "update"`; call `describe_tool(tool: "save_items", type: "gateway", op: "update")` for the current fields. Event-level name mappings on top of a gateway rename create two names for one thing.
 
 ### Bulk name mappings (aliases)

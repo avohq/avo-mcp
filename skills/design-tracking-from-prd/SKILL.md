@@ -25,7 +25,7 @@ From the PRD, Figma frames, or screenshots, extract:
 - **The screens or steps** in order, if the document has them. You'll use these to say where each event fires.
 - **Anything platform-specific** (web only, mobile only) that maps to Avo sources.
 
-If the document has no goals or metrics, stop and ask: "What problem does this solve, and which metric should move?" This gate is not optional; designing without it produces events nobody uses.
+If the document is missing the problem, a goal, or a target metric, stop and ask: "What problem does this solve, and which metric should move?" This gate is not optional; designing without it produces events nobody uses.
 
 ## Step 2: Load the rules
 
@@ -37,7 +37,7 @@ If the document has no goals or metrics, stop and ask: "What problem does this s
 
 Run both lenses for every action from Step 1 (data-designer Flow 7, step 3): a semantic `search` by meaning and a structural filter `search` by category, source, or property. `get` the promising hits. Semantic hits can live on other people's unmerged branches: only reuse items whose `Branch` is `master` (main). Look at neighbouring events in the same category and match their structure, casing, tense, and property naming. If the workspace has an allowed-words list for parts of event names, every new name must use those words; if none fits, raise it as an open question instead of breaking the rule.
 
-**Gateway workspaces.** If `search` with `itemType: "gateway"` returns any gateways, check how a neighbouring event reaches its destinations: `get` it with `checkpoint: {kind: "destination", destinationId}`. If outputs rename events (e.g. to snake_case for a warehouse) or only pass events on an allow-list, a new event needs the same treatment to arrive consistently. Add a **Routing** section to the proposal listing those gateway changes.
+**Gateway workspaces.** If `search` with `itemType: "gateway"` returns any gateways, check how a neighbouring event reaches its destinations: `get` it with `checkpoint: {kind: "destination", destinationId}`. Look at the event and its properties: renames (e.g. to snake_case for a warehouse), properties the gateway adds, and anything dropped by an allow-list. A new event and its new properties need the same treatment to arrive consistently, and a new event or property that isn't on an output's allow-list won't arrive at all. Add a **Routing** section to the proposal listing, per destination, the event and property renames and allow-list additions it needs.
 
 If the feature extends an existing journey, `search` with `itemType: "journey"` and walk the relevant one with `get` (`type: "journey"`) to see which events already fire on those screens.
 
@@ -76,7 +76,7 @@ Then ask: questions about the decisions, changes, or go ahead and create the bra
 On approval, follow data-designer Flow 7 (c):
 
 1. `workflow` with `action: "create_branch"`. Use the feature name in the branch name and link the PRD in the description.
-2. `describe_tool(tool: "save_items", type: "<type>")` before the first write of each type. Each item has the shape `{op, type, id?, name?, tempId?, fields}`, with type-specific fields inside `fields`.
+2. `describe_tool(tool: "save_items", type: "<type>", op: "<op>")` before the first write of each type and op: `create` for new items, `update` for reused ones you're changing (for example attaching a new property to an existing event). The two ops take different fields. Each item has the shape `{op, type, id?, name?, tempId?, fields}`, with type-specific fields inside `fields`.
 3. One batched `save_items` call where possible: new properties with `tempId`s, events referencing `$tmp:<tempId>`, then categories in a follow-up batch (categories can't attach to items created in the same batch).
 4. **Where it fires.** If you have screenshot URLs, seed each new event's `triggers` on create (`{sources, description, image: {source: "url", url}}`), with the description saying what the user does on that screen. Journeys themselves can't be written through the MCP: if the team uses journeys, give them the per-screen trigger list so they can add it in the journey builder.
 5. Read back the branch with `get` (`type: "branch"`, `include: ["all_changes"]`) and confirm it matches the approved proposal.

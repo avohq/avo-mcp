@@ -17,7 +17,7 @@ Read tools: `list_workspaces`, `describe_tool`, `search`, `get`, `list_branches`
 
 `describe_tool` tells you what a call accepts. The tool definitions sent on connect are deliberately short, so call `describe_tool()` for an overview of every tool and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
 
-`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `event_variant` (by the base event's id plus `variantId`; never by name), `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `event_variant` (by the base event's id plus `variantId`; never by name), `journey` (by id), `gateway`, `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`, `audit`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
 
 Write tools (require the `write` scope): `workflow` (actions `create_branch`, `update_branch_description`, `pull_main`, `set_source_language`, `import`) and `save_items`.
 
@@ -45,7 +45,7 @@ For these jobs, prefer the dedicated skill when it is installed. This skill stay
 - **import-tracking-plan** — bring an existing plan in from a spreadsheet, a CSV export, spec docs, Jira tickets, or another workspace.
 - **design-tracking-from-prd** — turn a PRD, Figma file, or feature brief into a design proposal and a branch.
 - **bulk-edit-tracking-plan** — the same change across many items: name mappings, per-event object splits, PII, owners, custom fields.
-- **branch-implementation-handoff** — a developer handoff page and ticket for a branch: where each event fires, the full payload, and code per platform.
+- **branch-implementation-handoff** — a developer handoff page, and optionally a ticket, for a branch: where each event fires, the full payload, and code per platform.
 - **review-tracking-branch** — an agent review of a branch against the rules before humans review it.
 
 ---

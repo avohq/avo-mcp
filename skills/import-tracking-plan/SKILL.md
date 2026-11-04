@@ -76,12 +76,12 @@ Wait for approval.
 1. `describe_tool(tool: "workflow", action: "import")` for the current payload shape.
 2. `workflow` with `action: "import"`, the `branchId`, `format`, and `payload`.
 3. `importMethod`: use `add_only` (the default) unless the user explicitly wants existing items overwritten (`add_and_update`). **Never use `add_update_and_remove`** unless the user confirms the file is a *complete* export of the whole plan — it removes anything missing from the file.
-4. Rows you decided to **reuse** must be removed from the file before a native import, or the importer will create or update them. There is no dry run, so double-check the file against the preview first.
+4. Rows you decided to **reuse** must be removed from the file before a native import, or the importer will create or update them. Removing rows makes the file partial, so never combine it with `add_update_and_remove`. There is no dry run, so double-check the file against the preview first.
 5. Apply the decisions from Step 4 that the CSV can't express (renames, name mappings, drafted descriptions) with `save_items` afterwards, on the same branch.
 
 **Agent-driven import:**
 
-1. `describe_tool(tool: "save_items", type: "<type>")` for each type before its first write. Each item has the shape `{op, type, id?, name?, tempId?, fields}`; type-specific fields such as `nestedProperties` or `nameMappings` go inside `fields`.
+1. `describe_tool(tool: "save_items", type: "<type>", op: "<op>")` for each type and op before its first write. `create` and `update` take different fields: on update, scalar edits go in `fields.set`. Each item has the shape `{op, type, id?, name?, tempId?, fields}`; type-specific fields such as `nestedProperties` or `nameMappings` go inside `fields`.
 2. Order the batches so references resolve:
    - Properties first (child properties before or alongside their object parents), each with a `tempId`.
    - Events next, referencing properties as `$tmp:<tempId>` within the same batch, or by real id from an earlier batch's result.
@@ -94,9 +94,10 @@ Wait for approval.
 
 Don't report success from the write responses alone.
 
-1. Filter-mode `search` on the branch (`branch: <branchId>`, `itemType: "event"`, then `"property"`), paging with `pageToken` until done. Repeat every parameter on each page, not just the token.
-2. Compare counts with the preview. Investigate any gap before reporting.
-3. `get` a few representative items (one object property, one variant, one event with many properties) on the branch and check them against the source.
+1. Filter-mode `search` on the branch (`branch: <branchId>`) for every listable type the preview contains: `itemType: "event"`, `"property"`, and `"event_variant"` or `"metric"` if the import had them. Page with `pageToken` until done, repeating every parameter on each page, not just the token.
+2. List sources and destinations (`search` with `itemType: "source"` / `"destination"`), and `get` each category and property bundle from the preview by name.
+3. Compare everything with the preview, type by type. Investigate any gap before reporting.
+4. `get` a few representative items (one object property, one variant, one event with many properties) on the branch and check them against the source, including their category and source attachments.
 
 ## Step 7: Report
 
