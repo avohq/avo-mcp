@@ -95,9 +95,9 @@ Wait for approval.
 Don't report success from the write responses alone.
 
 1. Filter-mode `search` on the branch (`branch: <branchId>`) for every listable type the preview contains: `itemType: "event"`, `"property"`, and `"event_variant"` or `"metric"` if the import had them. Page with `pageToken` until done, repeating every parameter on each page, not just the token.
-2. List sources and destinations (`search` with `itemType: "source"` / `"destination"`), and `get` each category and property bundle from the preview by name.
+2. List sources and destinations (`search` with `itemType: "source"` / `"destination"`), and `get` each category and property bundle from the preview by name, with `branchId`. Without it, `get` reads main, where the imported items don't exist yet.
 3. Compare everything with the preview, type by type. Investigate any gap before reporting.
-4. `get` a few representative items (one object property, one variant, one event with many properties) on the branch and check them against the source, including their category and source attachments.
+4. `get` a few representative items (one object property, one variant, one event with many properties) with `branchId` and check them against the source, including their category and source attachments.
 
 ## Step 7: Report
 

@@ -51,7 +51,7 @@ The payload table lists **every** property the event sends, not only what change
 
 For object properties, the child fields aren't in the property read. Take them from the code snippet of a codegen source (Step 4), or `get` each child property by name.
 
-Property bundles attached to the event are listed by name only. `get` each bundle (`type: "property_bundle"`) and include its properties in the payload; they're sent like any other property.
+Property bundles attached to the event are listed by name only. `get` each bundle (`type: "property_bundle"`) with `branchId`, since a branch can change a bundle's members, and include its properties in the payload; they're sent like any other property.
 
 Build one payload table per event, marking what's new on this branch.
 
