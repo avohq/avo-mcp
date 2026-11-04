@@ -7,7 +7,9 @@ description: Work with an existing Avo tracking plan through the Avo MCP. Use to
 
 This skill teaches the agent how to use the Avo MCP server to read and write a customer's *existing* tracking plan. It is the playbook for exploring, searching, designing-against, reviewing, and implementing a plan that already has a meaningful taxonomy, plus the policies and gotchas that keep agents from breaking main.
 
-If the workspace is empty or brand-new and the team is deciding what to track from scratch, use the **data-designer-new-plan** skill instead. Quick empty check: run `search` with `itemType: "event"` and no `query`; very few results means greenfield — switch to that skill.
+If the workspace is empty or brand-new and the team is deciding what to track from scratch, use the **data-designer-new-plan** skill instead. Quick empty check: `search` with `itemType: "event"` and `branch: "master"` (main); a branch scope on its own is a valid listing. No events, or very few, means greenfield — switch to that skill.
+
+**Semantic search spans branches.** Its results include items that exist only on other people's unmerged branches; the `Branch` column says where each hit lives (`master` is main). Before reusing a hit, check it's on main (or on the branch you're working on) and confirm it with `get`.
 
 The Avo MCP server runs at `https://mcp.avo.app/mcp` and exposes these tools:
 
@@ -35,6 +37,16 @@ Every `save_items` item has the shape `{op, type, id?, name?, tempId?, fields?}`
 ```
 
 The MCP never merges. Merging a branch to main always remains a human step in the Avo web app.
+
+### Use-case skills
+
+For these jobs, prefer the dedicated skill when it is installed. This skill stays the reference for tool use, policies, and design principles; they build on it.
+
+- **import-tracking-plan** — bring an existing plan in from a spreadsheet, a CSV export, spec docs, Jira tickets, or another workspace.
+- **design-tracking-from-prd** — turn a PRD, Figma file, or feature brief into a design proposal and a branch.
+- **bulk-edit-tracking-plan** — the same change across many items: name mappings, per-event object splits, PII, owners, custom fields.
+- **branch-implementation-handoff** — a developer handoff page and ticket for a branch: where each event fires, the full payload, and code per platform.
+- **review-tracking-branch** — an agent review of a branch against the rules before humans review it.
 
 ---
 
@@ -264,6 +276,8 @@ Steps:
 3. Return the structured diff. Ask if the user wants to see code snippets for any specific source (which is the entry point into Flow 11, Implement a branch).
 
 Note: if the branch touches a journey, the structured diff covers the underlying event and property changes.
+
+For a full review against the workspace's rules, with findings per item, use the **review-tracking-branch** skill. For a developer handoff page or ticket, use **branch-implementation-handoff**.
 
 ---
 
