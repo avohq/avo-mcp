@@ -145,7 +145,7 @@ Trigger prompts:
 
 Steps:
 
-1. `search` with `itemType: "journey"` and **no `query`**: journeys can only be listed, never searched by meaning, and the server also rejects content filters such as `tags` for them. Pass `branch` to list a branch's journeys (default is main). Listings return 25 per page by default (`maxResults` up to 100); follow `nextPageToken`, repeating every original parameter, until you find the journey by name.
+1. `search` with `itemType: "journey"` and **no `query`**: journeys can only be listed, never searched by meaning, and the server also rejects content filters such as `tags` for them. Pass `branch` to list a branch's journeys (default is main). Listings return 25 per page by default (`maxResults` up to 100); follow `nextPageToken`, repeating every original parameter, until you find the journey by name. Journey names can repeat or be blank: if more than one journey matches, or the match has no name, show the candidates with their ids, screen counts and descriptions, and ask the user which one before calling `get`.
 2. `get` with `type: "journey"` and the journey's `id` for the full definition.
 3. Present the journey with its steps and the events and properties it references. If no journey matches, fall back to matching metrics (`itemType: "metric"`), which often capture the same intent, and say so.
 4. If the user wants to change the journey, tell them journeys are edited in the Avo web app; the MCP can only change the underlying events and properties on a branch.
