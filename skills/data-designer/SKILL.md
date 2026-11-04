@@ -15,7 +15,7 @@ Read tools: `list_workspaces`, `describe_tool`, `search`, `get`, `list_branches`
 
 `describe_tool` tells you what a call accepts. The tool definitions sent on connect are deliberately short, so call `describe_tool()` for an overview of every tool and `describe_tool(tool:"save_items", type:"<type>", op:"<op>")` for the exact fields of an item type before your first write of that type in a session. Unknown values return an error listing the valid ones.
 
-`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `event_variant`, `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
+`get` looks up a single item by id or exact name. It supports `type` values `event`, `property`, `metric`, `category`, `property_bundle`, `source`, `destination`, `group_type`, `event_variant` (by the base event's id plus `variantId`; never by name), `journey` (by id), `workspace_config` (no id), and `branch` (`branchId` or `branchName`, plus `include`: `overview`, `all_changes`, `event_changes`, `property_changes`, `implementation_guide`, `code_snippets`). Item types are snake_case; the camelCase spellings (`propertyBundle`, `groupType`, `eventVariant`, `workspaceConfig`) still work but are deprecated. Use `type: "workspace_config"` to retrieve the workspace's tracking plan audit rules — i.e. the workspace-wide event naming, property naming, casing, and validation rules — before proposing any new events or properties.
 
 Write tools (require the `write` scope): `workflow` (actions `create_branch`, `update_branch_description`, `pull_main`, `set_source_language`, `import`) and `save_items`.
 
@@ -118,7 +118,7 @@ Trigger prompts and how each maps to filter fields:
 
 Steps:
 
-1. Pick `itemType` from the user's phrasing: `event` (default), `property`, `metric`, `event_variant`, `category`, `property_bundle`, or — to enumerate workspace metadata — `source`, `destination`, `group_type`, `journey`.
+1. Pick `itemType` from the user's phrasing: `event` (default), `property`, `metric`, `event_variant`, `category`, `property_bundle`, or — to enumerate workspace metadata — `source`, `destination`, `group_type`. Those three return the whole list in one response. For journeys, use Flow 5: journey listings are paged differently.
 2. Translate the phrasing into one or more filter fields: `tags`, `categories`, `sources`, `eventNames`, `variantNames`, `properties`, `nameMapping`. Multiple values in one array are OR'd. Multiple keys are AND'd.
 3. Call `search` with those filters and no `query` field. This is filter listing mode (cap 500, default 10). Set `includeVariants: true` when the user asks for events with their variants.
 4. Return: a one-line summary of what was filtered for ("Events with the `product_id` property"), then the list of results.
@@ -145,7 +145,7 @@ Trigger prompts:
 
 Steps:
 
-1. `search` with `itemType: "journey"` — semantic mode if Smart Search is on (`query: "<user's phrasing>"`), otherwise filter mode with no `query` to list journeys and pick by name.
+1. `search` with `itemType: "journey"` and **no `query`**: journeys can only be listed, never searched by meaning, and the server also rejects content filters such as `tags` for them. Pass `branch` to list a branch's journeys (default is main). Listings return 25 per page by default (`maxResults` up to 100); follow `nextPageToken`, repeating every original parameter, until you find the journey by name.
 2. `get` with `type: "journey"` and the journey's `id` for the full definition.
 3. Present the journey with its steps and the events and properties it references. If no journey matches, fall back to matching metrics (`itemType: "metric"`), which often capture the same intent, and say so.
 4. If the user wants to change the journey, tell them journeys are edited in the Avo web app; the MCP can only change the underlying events and properties on a branch.
