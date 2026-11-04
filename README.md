@@ -50,9 +50,21 @@ Bootstrap a tracking plan from scratch in an empty or near-empty workspace: run 
 
 - Path: [`skills/data-designer-new-plan/`](skills/data-designer-new-plan/)
 
+### Use-case skills
+
+Each of these packages one job teams ask for again and again. They build on `data-designer` and produce a named output.
+
+| Skill | What it does | Output |
+|---|---|---|
+| [`import-tracking-plan`](skills/import-tracking-plan/) | Brings an existing plan into Avo from a spreadsheet, a CSV export (Amplitude, Mixpanel, Segment, Avo), spec docs, Jira tickets, or another workspace | A branch + a reconciliation report |
+| [`design-tracking-from-prd`](skills/design-tracking-from-prd/) | Turns a PRD, Figma file, or feature brief into tracking that fits your existing plan | A design proposal, then a branch |
+| [`bulk-edit-tracking-plan`](skills/bulk-edit-tracking-plan/) | Applies one change across many items: name mappings, per-event object splits, PII, owners, custom fields, allowed values | A branch + a before/after summary |
+| [`branch-implementation-handoff`](skills/branch-implementation-handoff/) | Hands a branch to developers: where each event fires, the full payload, and the code per platform | A handoff page + an optional Jira, Linear, or GitHub ticket |
+| [`review-tracking-branch`](skills/review-tracking-branch/) | Reviews a branch against your rules before humans do, and lists what's waiting for your review | Findings per item + a reviewer summary |
+
 ## Use as a Claude Code plugin
 
-This repo is also a Claude Code plugin marketplace. Installing the `avo` plugin bundles both skills **and** registers the Avo MCP server (`https://mcp.avo.app/mcp`) in one step:
+This repo is also a Claude Code plugin marketplace. Installing the `avo` plugin bundles all the skills **and** registers the Avo MCP server (`https://mcp.avo.app/mcp`) in one step:
 
 ```bash
 claude plugin marketplace add avohq/avo-mcp
@@ -64,7 +76,7 @@ The plugin's layout:
 - `.claude-plugin/marketplace.json` — the marketplace manifest (lists the `avo` plugin)
 - `.claude-plugin/plugin.json` — the `avo` plugin manifest
 - `.mcp.json` — registers the Avo MCP server
-- `skills/` — the two skills, auto-discovered when the plugin is installed
+- `skills/` — the skills, auto-discovered when the plugin is installed
 
 ## Install skills only (no plugin)
 
@@ -74,6 +86,8 @@ To use the skills without the plugin / MCP registration, copy a skill directory 
 cp -R skills/data-designer ~/.claude/skills/data-designer
 cp -R skills/data-designer-new-plan ~/.claude/skills/data-designer-new-plan
 ```
+
+The use-case skills refer to `data-designer` for tool use and design principles, so copy it alongside any of them.
 
 ## Writing model
 
@@ -87,6 +101,6 @@ This repo is the source of truth for these skills. Avo's internal tooling syncs 
 
 ## License
 
-The contents of this repository — the `data-designer` and `data-designer-new-plan` Agent Skills and the plugin manifest and configuration — are released under the [MIT License](./LICENSE).
+The contents of this repository — the Agent Skills in `skills/` and the plugin manifest and configuration — are released under the [MIT License](./LICENSE).
 
 This covers **only the files in this repository**. It grants no rights to the Avo MCP server (`https://mcp.avo.app/mcp`), the Avo web application, Avo SDKs, or any other Avo software or service — these are separate works, governed by Avo's [Terms of Service](https://www.avo.app/l/terms) and your agreement with Avo.
